@@ -1,0 +1,60 @@
+# Отключаем паралельное создание вм
+ENV['VAGRANT_NO_PARALLEL'] = 'yes'
+# Скачиваем generic/debian12 и добавляем через команду vagrant box add <name> <file>
+# Тестировал на версии v4.3.12 - amd64 - virtualbox
+vagrant_box = "generic/debian12"
+
+# Задаем параметры мастера
+cpu_m_node     = 2    # Количество CPU для мастер-ноды
+memory_m_node  = 3072 # Объем памяти (в МБ) для мастер-ноды
+
+# Задаем параметры воркеров, если необходимо больше воркеров незабываем добавить адреса нод в prepare_all_nodes.sh 
+cpu_w_node     = 2    # Количество CPU для рабочих узлов
+memory_w_node  = 2048 # Объем памяти (в МБ) для рабочих узлов
+count_w_node   = 2    # Количество рабочих узлов, незабываем добавить адреса нод в prepare_all_nodes.sh 
+
+Vagrant.configure(2) do |config|
+  # Выполняем скрипт на всех нодах для подготовки идентичного окружения
+  config.vm.provision "shell", path: "scripts/prepare_all_nodes.sh"
+
+  # Настройка главного узла (мастера)
+  config.vm.define "m-node" do |node|
+    
+    node.vm.box               = vagrant_box
+    node.vm.box_check_update  = false              # Отключаем проверку обновлений для образа
+    node.vm.hostname          = "m-node.stage.dev" # Устанавливаем имя хоста для мастер-ноды
+
+    # Настройка сети для мастер-ноды
+    node.vm.network "private_network", ip: "172.30.0.100"
+
+    node.vm.provider :virtualbox do |v|
+      v.name    = "m-node"         # Имя виртуальной машины в VirtualBox
+      v.memory  = memory_m_node    # Устанавливаем объем памяти
+      v.cpus    = cpu_m_node       # Устанавливаем количество CPU
+    end
+    # Выполняем скрипт для установки и настройки мастер-ноды
+    node.vm.provision "shell", path: "scripts/install_node_master.sh"
+  end
+
+  # Настройка рабочих узлов (воркеров)
+  count_w_node.times do |i|
+    config.vm.define "w-node#{i+1}" do |node|
+      node.vm.box               = vagrant_box
+      node.vm.box_check_update  = false                    # Отключаем проверку обновлений для образа
+      node.vm.hostname          = "w-node#{i+1}.stage.dev" # Устанавливаем имя хоста для рабочего узла
+      
+      # Настройка сети для рабочих узлов
+      node.vm.network "private_network", ip: "172.30.0.10#{i+1}"
+
+      node.vm.provider :virtualbox do |v|
+        v.name    = "w-node#{i+1}"         # Имя виртуальной машины в VirtualBox
+        v.memory  = memory_w_node          # Устанавливаем объем памяти
+        v.cpus    = cpu_w_node             # Устанавливаем количество CPU
+      end
+
+      # Выполняем скрипт для установки и настройки рабочего узла
+      node.vm.provision "shell", path: "scripts/install_node_worker.sh"
+    end
+  end
+
+end
