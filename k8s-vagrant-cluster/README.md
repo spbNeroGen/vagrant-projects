@@ -20,7 +20,7 @@
   1. **Клонируйте репозиторий**:
 
      ```bash
-     git clone https://github.com/ваш-пользователь/vagrant-projects.git
+     git clone https://github.com/nerogen92/vagrant-projects.git
      ```
 
   2. **Перейдите в директорию проекта**:
