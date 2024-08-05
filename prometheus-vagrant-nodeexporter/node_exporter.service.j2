@@ -1,0 +1,13 @@
+[Unit]
+Description=Node Exporter
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=nobody
+Group=nogroup
+Type=simple
+ExecStart=/opt/node_exporter-1.8.2.linux-amd64/node_exporter --collector.systemd --collector.processes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,136 @@
+---
+- name: Install Docker
+  hosts: all
+  become: true
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - ca-certificates
+          - curl
+        state: present
+
+    - name: Create directory for Docker GPG key
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Docker GPG key
+      get_url:
+        url: https://download.docker.com/linux/debian/gpg
+        dest: /etc/apt/keyrings/docker.asc
+
+    - name: Set permissions for Docker GPG key
+      file:
+        path: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Add Docker repository
+      shell: |
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    - name: Update apt cache after adding Docker repository
+      apt:
+        update_cache: yes
+
+    - name: Install Docker packages
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Ensure Docker service is started
+      service:
+        name: docker
+        state: started
+        enabled: yes
+        
+    - name: Add vagrant user to docker group
+      user:
+        name: vagrant
+        groups: docker
+        append: yes
+
+- name: Install Node Exporter
+  hosts: all
+  become: true
+  tasks:
+    - name: Download Node Exporter binary
+      get_url:
+        url: "https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz"
+        dest: /tmp/node_exporter.tar.gz
+
+    - name: Extract Node Exporter
+      ansible.builtin.unarchive:
+        src: /tmp/node_exporter.tar.gz
+        dest: /opt
+        remote_src: yes
+
+    - name: Create Node Exporter systemd service
+      ansible.builtin.template:
+        src: node_exporter.service.j2
+        dest: /etc/systemd/system/node_exporter.service
+      notify: Start Node Exporter
+
+  handlers:
+    - name: Start Node Exporter
+      ansible.builtin.systemd:
+        name: node_exporter
+        state: started
+        enabled: yes
+
+- name: Configure Prometheus and Grafana containers
+  become: true
+  hosts: all
+  tasks:
+    - name: Run docker compose down
+      command: docker compose down
+      args:
+        chdir: /home/vagrant/
+      ignore_errors: true 
+    - name: Run docker compose up
+      command: docker compose up -d
+      args:
+        chdir: /home/vagrant/
+
+    - name: Wait for Prometheus to be available
+      ansible.builtin.wait_for:
+        port: 9090
+        delay: 10
+        timeout: 300
+
+    - name: Wait for Grafana to be available
+      ansible.builtin.wait_for:
+        port: 3000
+        delay: 10
+        timeout: 300
+
+    - name: Import Grafana dashboard foo
+      grafana_dashboard:
+        grafana_url: "http://localhost:3000"
+        grafana_user: "admin"
+        grafana_password: "admin"
+        state: present
+        path: "./dashboard.json"
+        overwrite: yes
+
+    - name: Add Prometheus datasource to Grafana
+      grafana_datasource:
+        name: "Prometheus"
+        ds_type: "prometheus"
+        ds_url: "http://prometheus:9090" 
+        access: "proxy"
+        is_default: true
+        url_password: "admin"
+        url_username: "admin"
+        grafana_url: "http://localhost:3000"
+        state: present

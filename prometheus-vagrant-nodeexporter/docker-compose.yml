@@ -1,0 +1,40 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - /home/vagrant/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    restart: unless-stopped
+    expose:
+      - 9090
+    networks:
+      - monitor-net
+  grafana:
+    image: grafana/grafana:11.0.0-ubuntu
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    expose:
+      - 3000
+    networks:
+      - monitor-net
+networks:
+  monitor-net:
+    driver: bridge
+
+volumes:
+  prometheus_data: {}
+  grafana_data: {}

@@ -35,4 +35,7 @@
 ### [k8s-vagrant-cluster](./k8s-vagrant-cluster)
 
 - **Описание**: разворачивает кластер Kubernetes с помощью `kubeadm` (1 мастер и 2 воркера)
-- **Как использовать**: проверьте `README.md` в директории проекта `k8s-vagrant-cluster` для получения более подробной информации.
+
+### [prometheus-vagrant-nodeexporter](./prometheus-vagrant-nodeexporter)
+
+- **Описание**: разворачивает виртуальную машину, устанавливает Docker через ansible, запускает docker compose (поднимает prometheus + grafana, устанавливает нужный dashboard), а также настраивает Node Exporter для сборка метрик.

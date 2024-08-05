@@ -1,0 +1,40 @@
+# Указываем имя Vagrant box для использования и команду для его добавления:
+# Скачиваем generic/debian12 и добавляем через команду vagrant box add <name> <file>
+# Тестировал на версии v4.3.12 - amd64 - virtualbox
+vagrant_box = "generic/debian12"
+
+# Устанавливаем параметры для виртуальной машины (VM)
+cpu_node     = 2        # Количество процессорных ядер
+memory_node  = 3072     # Объем памяти (в МБ)
+
+Vagrant.configure(2) do |config|
+  # Определяем конфигурацию для виртуальной машины с именем "node-prom"
+  config.vm.define "node-prom" do |node|
+    node.vm.box               = vagrant_box               # Устанавливаем box для VM
+    node.vm.box_check_update  = false                      # Отключаем проверку обновлений box
+    node.vm.hostname          = "node-prom.stage.dev"      # Устанавливаем hostname для VM
+
+    # Настройка сети: создаем частную сеть с указанным IP-адресом
+    node.vm.network "private_network", ip: "192.168.56.10"
+    # Конфигурация провайдера VirtualBox
+    node.vm.provider :virtualbox do |v|
+      v.name    = "node-prom"         # Имя виртуальной машины в VirtualBox
+      v.memory  = memory_node         # Устанавливаем объем памяти
+      v.cpus    = cpu_node            # Устанавливаем количество процессорных ядер
+    end
+    
+    # Провизионеры: копируем файлы на виртуальную машину
+    # Докер композ для поднятия прометея и графаны
+    config.vm.provision "file", source: "./docker-compose.yml", destination: "/home/vagrant/docker-compose.yml"
+    # Настройи прометея, как глобальные, так и сбор метрик
+    config.vm.provision "file", source: "./prometheus/prometheus.yml", destination: "/home/vagrant/prometheus/prometheus.yml"
+    #Удобный дашбор - https://grafana.com/grafana/dashboards/1860-node-exporter-full/
+    config.vm.provision "file", source: "dashboard.json", destination: "/home/vagrant/dashboard.json"
+
+    # Провизионер Ansible: выполняем Ansible playbook
+    config.vm.provision :ansible do |ansible|
+      ansible.playbook = "playbook.yml"          # Указываем путь к Ansible playbook
+      ansible.compatibility_mode = "2.0"        # Устанавливаем совместимость с Ansible 2.0
+    end
+  end
+end
