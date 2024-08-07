@@ -1,0 +1,15 @@
+# Ignore Vagrant's default files
+.vagrant/
+
+# Ignore Vagrant-specific files
+vagrant-disk/
+
+# Ignore log files
+*.log
+
+# Ignore temporary files
+*.tmp
+*.swp
+
+# Ignore any local environment files
+.env

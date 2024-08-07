@@ -1,0 +1,39 @@
+# Указываем имя Vagrant box для использования и команду для его добавления:
+# Скачиваем generic/debian12 и добавляем через команду vagrant box add <name> <file>
+# Тестировал на версии v4.3.12 - amd64 - virtualbox
+vagrant_box = "generic/debian12"
+
+# Устанавливаем параметры для виртуальных машин (VM)
+cpu_node     = 2        # Количество процессорных ядер
+memory_node  = 3072     # Объем памяти (в МБ)
+
+Vagrant.configure("2") do |config|
+    # Описание виртуальной машины для Jenkins Master
+    config.vm.define "j-master" do |master|
+      master.vm.box = vagrant_box
+      master.vm.network "forwarded_port", guest: 8080, host: 8080
+      master.vm.network "private_network", ip: "192.168.56.10"
+      master.vm.hostname          = "j-master.stage.dev"
+
+      master.vm.provider :virtualbox do |v|
+        v.name    = "j-master"          # Имя виртуальной машины в VirtualBox
+        v.memory  = memory_node         # Устанавливаем объем памяти
+        v.cpus    = cpu_node            # Устанавливаем количество процессорных ядер
+      end
+      master.vm.provision "shell", path: "scripts/install-jenkins-master.sh"
+    end
+  
+    # Описание виртуальной машины для Jenkins Slave
+    config.vm.define "j-slave" do |slave|
+      slave.vm.box = vagrant_box
+      slave.vm.network "private_network", ip: "192.168.56.11"
+      slave.vm.hostname          = "j-slave.stage.dev"
+      slave.vm.provider :virtualbox do |v|
+        v.name    = "j-slave"           # Имя виртуальной машины в VirtualBox
+        v.memory  = memory_node         # Устанавливаем объем памяти
+        v.cpus    = cpu_node            # Устанавливаем количество процессорных ядер
+      end
+
+      slave.vm.provision "shell", path: "scripts/install-jenkins-slave.sh"
+    end
+  end

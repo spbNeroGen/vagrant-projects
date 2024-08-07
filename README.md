@@ -39,3 +39,7 @@
 ### [prometheus-vagrant-nodeexporter](./prometheus-vagrant-nodeexporter)
 
 - **Описание**: разворачивает виртуальную машину, устанавливает Docker через ansible, запускает docker compose (поднимает prometheus + grafana, устанавливает нужный dashboard), а также настраивает Node Exporter для сборка метрик.
+
+### [jenkins-vagrant-pipeline](./jenkins-vagrant-pipeline)
+
+- **Описание**: разворачивает Jenkins с настроенным агентом для CI/CD. Включает в себя установку Jenkins Master на одном узле и подключение Jenkins Slave (агента) с другого узла через jnlp, а так же предустановка Job и плагинов.
