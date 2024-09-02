@@ -1,0 +1,60 @@
+# Указываем имя Vagrant box для использования и команду для его добавления:
+# Скачиваем generic/debian12 и добавляем через команду vagrant box add <name> <file>
+# Тестировал на версии v4.3.12 - amd64 - virtualbox
+vagrant_box = "generic/debian12"
+
+#Параметры:
+cpu_node_pg     = 2       
+memory_node_pg  = 2048     
+
+cpu_node_etcd       = 2        
+memory_node_etcd    = 2048     
+
+cpu_node_haproxy      = 2        
+memory_node_haproxy   = 2048  
+
+# Vagrantfile
+Vagrant.configure("2") do |config|
+    # Общие параметры для всех виртуальных машин
+    config.vm.box = vagrant_box
+  
+    # Узлы PostgreSQL с Patroni
+    (1..3).each do |i|
+      config.vm.define "node#{i}" do |node|
+        node.vm.hostname = "node-pg#{i}"
+        node.vm.network "private_network", ip: "192.168.50.#{10+i}"
+
+        node.vm.provider :virtualbox do |v|
+            v.name    = "PG-node#{i}"
+            v.memory  = memory_node_pg
+            v.cpus    = cpu_node_pg
+          end
+       node.vm.provision "shell", path: "scripts/prepare_all_nodes.sh"
+      end
+    end
+
+    # Узел ETCDnode
+    config.vm.define "etcdnode" do |etcdnode|
+      etcdnode.vm.hostname = "node-etcd"# 
+      etcdnode.vm.network "private_network", ip: "192.168.50.20"
+      etcdnode.vm.provider :virtualbox do |v|
+        v.name    = "ETCD-node" 
+        v.memory  = memory_node_etcd        
+        v.cpus    = cpu_node_etcd            
+      end
+    etcdnode.vm.provision "shell", path: "scripts/install_etcdnode.sh"
+    end
+    
+    # Узел HAProxy
+    config.vm.define "haproxy" do |haproxy|
+      haproxy.vm.hostname = "haproxy"
+      haproxy.vm.network "private_network", ip: "192.168.50.30"
+      haproxy.vm.provider :virtualbox do |v|
+        v.name    = "HAProxy-node" 
+        v.memory  = memory_node_haproxy         
+        v.cpus    = cpu_node_haproxy            
+      end
+      haproxy.vm.provision "shell", path: "scripts/install_haproxy.sh"
+    end
+  end
+  
