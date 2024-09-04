@@ -43,3 +43,7 @@
 ### [jenkins-vagrant-pipeline](./jenkins-vagrant-pipeline)
 
 - **Описание**: разворачивает Jenkins с настроенным агентом для CI/CD. Включает в себя установку Jenkins Master на одном узле и подключение Jenkins Slave (агента) с другого узла через jnlp, а так же предустановка Job и плагинов.
+
+### [postgresql-ha-cluster](./postgresql-ha-cluster)
+
+- **Описание**: разворачивает кластерную архитектура PostgreSQL с использованием ETCD, Patroni и HAProxy.
