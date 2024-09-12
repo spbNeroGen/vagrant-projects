@@ -36,6 +36,10 @@
 
 - **Описание**: разворачивает кластер Kubernetes с помощью `kubeadm` (1 мастер и 2 воркера)
 
+### [microk8s-vm](./microk8s-vm)
+
+- **Описание**: разворачивает Microk8s.
+
 ### [prometheus-vagrant-nodeexporter](./prometheus-vagrant-nodeexporter)
 
 - **Описание**: разворачивает виртуальную машину, устанавливает Docker через ansible, запускает docker compose (поднимает prometheus + grafana, устанавливает нужный dashboard), а также настраивает Node Exporter для сборка метрик.
