@@ -1,0 +1,33 @@
+# Скачиваем generic/debian12 и добавляем через команду vagrant box add <name> <file>
+# Тестировал на версии v4.3.12 - amd64 - virtualbox
+vagrant_box = "generic/debian12"
+
+# Задаем параметры мастера
+cpu_node     = 4    # Количество CPU
+memory_node  = 5096 # Объем памяти (в МБ)
+
+Vagrant.configure(2) do |config|
+
+  # Настройка microk8s
+  config.vm.define "microk8s" do |node|
+    
+    node.vm.box               = vagrant_box
+    node.vm.box_check_update  = false                # Отключаем проверку обновлений для образа
+    node.vm.hostname          = "microk8s.stage.dev" # Устанавливаем имя хоста для microk8s
+
+    # Настройка сети
+    node.vm.network "private_network", ip: "172.30.0.200"
+    node.vm.network 'forwarded_port',  guest: 80,    host: 8000,  id: 'ingress',   host_ip: '127.0.0.1', auto_correct: true
+    node.vm.network 'forwarded_port',  guest: 16443,  host: 16443,  id: 'apiserver', host_ip: '127.0.0.1', auto_correct: true
+    node.vm.network 'forwarded_port',  guest: 32000, host: 32000, id: 'registry',  host_ip: '127.0.0.1', auto_correct: true
+
+    node.vm.provider :virtualbox do |v|
+      v.name    = "microk8s"     # Имя виртуальной машины в VirtualBox
+      v.memory  = memory_node    # Устанавливаем объем памяти
+      v.cpus    = cpu_node       # Устанавливаем количество CPU
+    end
+
+    # Выполняем скрипт для установки и настройки microk8s
+    node.vm.provision "shell", path: "scripts/install_microk8s.sh"
+  end
+end
