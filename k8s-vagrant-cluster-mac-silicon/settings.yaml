@@ -1,0 +1,25 @@
+
+cluster_name: Kubernetes Cluster
+network:
+  control_ip: 10.0.0.10
+  dns_servers:
+  - 8.8.8.8
+  - 8.8.4.4
+  pod_cidr: 172.16.1.0/16
+  service_cidr: 172.17.1.0/18
+nodes:
+  control:
+    cpu: 2
+    memory: 4096
+  workers:
+    count: 2
+    cpu: 1
+    memory: 2048
+# shared_folders:
+#   - host_path: ../images
+#     vm_path: /vagrant/images
+software:
+  box: bento/ubuntu-22.04
+  calico: 3.26.0
+  kubernetes: 1.29.0-*
+

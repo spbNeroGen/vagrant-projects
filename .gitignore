@@ -13,3 +13,5 @@ vagrant-disk/
 
 # Ignore any local environment files
 .env
+
+.DS_Store
